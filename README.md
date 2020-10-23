@@ -220,6 +220,8 @@ var Tweet = dynogels.define('Tweet', {
 #### Data Validation
 Dynogels automatically validates the model against the schema before attempting to save it, but you can also call the `validate` method to validate an object before saving it. This can be helpful for a handler to validate input.
 
+As an option, you can disable validation with the `validate: false` option when calling `Table.update(...)`.  On partial updates, it is often impossible to safely validate part of a model (since there might be validation dependencies on other, unprovided properties).
+
 ```js
 var Tweet = dynogels.define('Tweet', {
   hashKey : 'TweetID',

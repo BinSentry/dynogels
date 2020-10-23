@@ -956,6 +956,68 @@ describe('table', () => {
         done();
       });
     });
+
+    it('should reject invalid item', (done) => {
+      const config = {
+        hashKey: 'email',
+        schema: {
+          email: Joi.string(),
+          name: Joi.string(),
+          age: Joi.number(),
+        }
+      };
+
+      const s = new Schema(config);
+
+      table = new Table('accounts', s, realSerializer, docClient, logger);
+
+      const item = { email: 'test@test.com', name: 'Tim Test', age: 'foo' };
+      table.update(item, (err, account) => {
+        expect(err).to.exist;
+        expect(account).to.not.exist;
+        done();
+      });
+    });
+
+    it('should not reject invalid item when validation disabled', (done) => {
+      const config = {
+        hashKey: 'email',
+        schema: {
+          email: Joi.string(),
+          name: Joi.string(),
+          age: Joi.number(),
+        }
+      };
+
+      const s = new Schema(config);
+
+      table = new Table('accounts', s, realSerializer, docClient, logger);
+
+      const request = {
+        TableName: 'accounts',
+        Key: { email: 'test@test.com' },
+        ReturnValues: 'ALL_NEW',
+        UpdateExpression: 'SET #name = :name, #age = :age',
+        ExpressionAttributeValues: { ':name': 'Tim Test', ':age': 'foo' },
+        ExpressionAttributeNames: { '#name': 'name', '#age': 'age' }
+      };
+
+      const returnedAttributes = {
+        email: 'test@test.com',
+        name: 'Tim Test',
+        age: 'foo',
+        scores: [97, 86]
+      };
+
+      docClient.update.withArgs(request).yields(null, { Attributes: returnedAttributes });
+
+      const item = { email: 'test@test.com', name: 'Tim Test', age: 'foo' };
+      table.update(item, { validate: false }, (err, account) => {
+        expect(err).to.not.exist;
+        expect(account).to.exist;
+        done();
+      });
+    });
   });
 
   describe('#query', () => {
